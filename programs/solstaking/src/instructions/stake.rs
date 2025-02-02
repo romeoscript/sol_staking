@@ -1,15 +1,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::state::*;
+use crate::errors::StakingError;
 
 pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
     // Validate amount
-    require!(amount > 0, ErrorCode::InvalidAmount);
+    require!(amount > 0, StakingError::InvalidAmount);
 
     // Verify sufficient balance
     require!(
         ctx.accounts.user_token_account.amount >= amount,
-        ErrorCode::InsufficientFunds
+        StakingError::InsufficientFunds
     );
 
     // Transfer tokens to staking vault
@@ -26,7 +27,7 @@ pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
     // Update total staked amount
     let staking_contract = &mut ctx.accounts.staking_contract;
     staking_contract.total_staked = staking_contract.total_staked.checked_add(amount)
-        .ok_or(ErrorCode::MathOverflow)?;
+        .ok_or(StakingError::MathOverflow)?;
 
     Ok(())
 }
@@ -41,14 +42,14 @@ pub struct Stake<'info> {
 
     #[account(
         mut,
-        constraint = user_token_account.mint == staking_contract.token_mint @ ErrorCode::InvalidToken,
-        constraint = user_token_account.owner == user.key() @ ErrorCode::InvalidTokenAccount
+        constraint = user_token_account.mint == staking_contract.token_mint @ StakingError::InvalidToken,
+        constraint = user_token_account.owner == user.key() @ StakingError::InvalidTokenAccount
     )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = staking_token_account.mint == staking_contract.token_mint @ ErrorCode::InvalidToken
+        constraint = staking_token_account.mint == staking_contract.token_mint @ StakingError::InvalidToken
     )]
     pub staking_token_account: Account<'info, TokenAccount>,
 

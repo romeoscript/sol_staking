@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::state::*;
+use crate::errors::StakingError;
+
 
 pub fn modify_pool_parameters(
     ctx: Context<ModifyPoolParameters>,
@@ -12,7 +14,7 @@ pub fn modify_pool_parameters(
     // Verify owner
     require!(
         ctx.accounts.staking_contract.owner == ctx.accounts.owner.key(),
-        ErrorCode::Unauthorized
+        StakingError::Unauthorized
     );
 
     let staking_contract = &mut ctx.accounts.staking_contract;

@@ -1,11 +1,12 @@
 use anchor_lang::prelude::*;
 use crate::state::*;
+use crate::errors::StakingError;
 
 pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
     let staking_contract = &mut ctx.accounts.staking_contract;
     
     // Verify stake exists
-    require!(staking_contract.total_staked > 0, ErrorCode::NoStake);
+    require!(staking_contract.total_staked > 0, StakingError::NoStake);
 
     // Calculate slots elapsed since last claim
     let current_slot = Clock::get()?.slot;
@@ -14,7 +15,7 @@ pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
     // Check if minimum locktime has been reached
     require!(
         slots_elapsed >= staking_contract.locktime,
-        ErrorCode::StakingPeriodNotReached
+        StakingError::StakingPeriodNotReached
     );
 
     // Calculate SOL reward
@@ -24,12 +25,12 @@ pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
         slots_elapsed,
     )?;
 
-    require!(reward > 0, ErrorCode::RewardTooSmall);
+    require!(reward > 0, StakingError::RewardTooSmall);
     
     // Verify reward vault has enough SOL
     require!(
         ctx.accounts.reward_vault.lamports() >= reward,
-        ErrorCode::InsufficientContractBalance
+        StakingError::InsufficientContractBalance
     );
 
     // Transfer SOL from vault to user
@@ -38,14 +39,14 @@ pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
         .reward_vault
         .lamports()
         .checked_sub(reward)
-        .ok_or(ErrorCode::MathOverflow)?;
+        .ok_or(StakingError::MathOverflow)?;
 
     **ctx.accounts.user.try_borrow_mut_lamports()? = ctx
         .accounts
         .user
         .lamports()
         .checked_add(reward)
-        .ok_or(ErrorCode::MathOverflow)?;
+        .ok_or(StakingError::MathOverflow)?;
 
     // Update last claim slot
     staking_contract.last_claim_slot = current_slot;
@@ -85,13 +86,13 @@ fn calculate_reward(
     
     let reward = (total_staked as u128)
         .checked_mul(apr as u128)
-        .ok_or(ErrorCode::MathOverflow)?
+        .ok_or(StakingError::MathOverflow)?
         .checked_mul(slots_elapsed as u128)
-        .ok_or(ErrorCode::MathOverflow)?
+        .ok_or(StakingError::MathOverflow)?
         .checked_div(slots_per_year as u128)
-        .ok_or(ErrorCode::MathOverflow)?
+        .ok_or(StakingError::MathOverflow)?
         .checked_div(100) // APR is in percentage
-        .ok_or(ErrorCode::MathOverflow)?;
+        .ok_or(StakingError::MathOverflow)?;
 
     Ok(reward as u64)
 }
