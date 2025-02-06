@@ -54,6 +54,36 @@ pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
     Ok(())
 }
 
+pub fn view_unclaimed_rewards(ctx: Context<ViewRewards>) -> Result<u64> {
+    let staking_contract = &ctx.accounts.staking_contract;
+    
+    require!(staking_contract.total_staked > 0, StakingError::NoStake);
+
+    let current_slot = Clock::get()?.slot;
+    let slots_elapsed = current_slot.saturating_sub(staking_contract.last_claim_slot);
+    
+    // Return 0 if locktime hasn't elapsed since last claim
+    if slots_elapsed < staking_contract.locktime {
+        return Ok(0);
+    }
+
+    calculate_reward(
+        staking_contract.total_staked,
+        staking_contract.apr,
+        slots_elapsed,
+    )
+}
+
+#[derive(Accounts)]
+pub struct ViewRewards<'info> {
+    pub user: Signer<'info>,
+
+    #[account(
+        seeds = [b"staking", staking_contract.pool_name.as_bytes()],
+        bump
+    )]
+    pub staking_contract: Account<'info, StakingContract>,
+}
 #[derive(Accounts)]
 pub struct ClaimReward<'info> {
     #[account(mut)]
@@ -76,6 +106,7 @@ pub struct ClaimReward<'info> {
 
     pub system_program: Program<'info, System>,
 }
+
 
 fn calculate_reward(
     total_staked: u64,
