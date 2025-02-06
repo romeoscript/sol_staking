@@ -82,7 +82,7 @@ fn calculate_reward(
     apr: u64,
     slots_elapsed: u64,
 ) -> Result<u64> {
-    let slots_per_year = 63_072_000; // Approximate number of slots in a year
+    let slots_per_year = 63_072_000;
     
     let reward = (total_staked as u128)
         .checked_mul(apr as u128)

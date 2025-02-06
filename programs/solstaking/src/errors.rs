@@ -6,6 +6,9 @@ pub enum StakingError {
     #[msg("Unauthorized: Only the contract owner can perform this action.")]
     Unauthorized,
 
+    #[msg("Active Stakes: Cannot delete pool with active stakes")]
+    ActiveStakes,
+
     #[msg("Insufficient Funds: The user does not have enough tokens to stake or unstake.")]
     InsufficientFunds,
 

@@ -37,6 +37,10 @@ pub mod solstaking {
         instructions::modify_pool_parameters(ctx, new_apr, new_locktime)
     }
 
+    pub fn delete_staking_pool(ctx: Context<DeleteStakingPool>, force: bool) -> Result<()> {
+        instructions::delete_staking_pool(ctx, force)
+    }
+
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
         instructions::stake(ctx, amount)
     }
