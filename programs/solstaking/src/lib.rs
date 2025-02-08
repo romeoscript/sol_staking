@@ -9,7 +9,7 @@ use instructions::*;
 use state::*;
 use errors::*;
 
-declare_id!("FTNGc2wqb3oL1F3VZcqN6Ym99h5LuBPj8quG9YVnbz16");
+declare_id!("7nRA853Bg6xAqdZ3iqxiMhXV3ZC2tSU3gGHjcUFGHCNp");
 
 #[program]
 pub mod solstaking {
@@ -51,5 +51,9 @@ pub mod solstaking {
 
     pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
         instructions::claim_reward(ctx)
+    }
+
+    pub fn view_unclaimed_rewards(ctx: Context<ViewRewards>) -> Result<u64> {
+        instructions::view_unclaimed_rewards(ctx)
     }
 }
